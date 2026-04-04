@@ -1,0 +1,15 @@
+server:
+  port: 8081 # Mỗi service con một port riêng (8081, 8082, 8083...)
+
+spring:
+  application:
+    name: auth-service # TÊN NÀY PHẢI KHỚP VỚI "lb://auth-service" Ở GATEWAY
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ # Trỏ về cổng của DiscoverService
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true # Ưu tiên dùng IP thay vì hostname để tránh lỗi mạng nội bộ
