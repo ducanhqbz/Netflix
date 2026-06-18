@@ -1,32 +1,32 @@
 server:
-  port: 8080 # Gateway luôn là cửa ngõ chính nên thường chạy ở port 8080 hoặc 80
+  port: 8080
 
 spring:
   application:
     name: api-gateway
-cloud:
-  gateway:
-  routes:
-    # 1. Định tuyến cho HomePageService (Trang chủ)
-    - id: homepage-route
-      uri: lb://homepage-service # lb:// giúp tìm service qua tên đã đăng ký trên Eureka
-      predicates:
-        - Path=/home/** # Mọi request bắt đầu bằng /home sẽ vào đây
+  data:
+    redis:
+      database: 0
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: homepage-route
+              uri: lb://homepage-service
+              predicates:
+                - Path=/home/**
 
-    # 2. Định tuyến cho AuthService (Đăng nhập/Đăng ký)
-    - id: auth-route
-      uri: lb://auth-service
-      predicates:
-        - Path=/api/auth/**
+            - id: autharoute
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/auth/**
 
-
-# Cấu hình báo danh với Eureka Server (Trạm trung tâm)
 eureka:
   client:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      # Mặc định Eureka Server (thư mục DiscorverService của bạn) sẽ chạy ở port 8761
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true

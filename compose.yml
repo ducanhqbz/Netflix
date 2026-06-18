@@ -1,0 +1,70 @@
+services:
+  mysql-main:
+    image: mysql:8.0
+    container_name: mysql-main
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - micro-net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: netflix
+      RABBITMQ_DEFAULT_PASS: 123456
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - micro-net
+  redis:
+    image: redis:7.4
+    container_name: redis-server
+    restart: always
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - "123456"
+
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "123456", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - micro-net
+
+volumes:
+  mysql_data:
+  rabbitmq_data:
+  redis_data:
+
+networks:
+  micro-net:
+    driver: bridge

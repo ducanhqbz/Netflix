@@ -2,20 +2,14 @@ server:
   port: 8081 # Mỗi service con một port riêng (8081, 8082, 8083...)
 
 spring:
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:netflix}
-    password: ${RABBITMQ_PASSWORD:123456}
-    virtual-host: ${RABBITMQ_VIRTUAL_HOST:/}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:123456}
   datasource:
-    url: jdbc:mysql://localhost:3306/auth_db
-    username: auth_user
+    url: jdbc:mysql://localhost:3306/homepage_db
+    username: homepage_user
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:

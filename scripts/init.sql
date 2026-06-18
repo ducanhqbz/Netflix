@@ -1,0 +1,24 @@
+-- ===== CREATE DATABASES =====
+CREATE DATABASE IF NOT EXISTS auth_db;
+CREATE DATABASE IF NOT EXISTS upload_db;
+CREATE DATABASE IF NOT EXISTS stream_db;
+CREATE DATABASE IF NOT EXISTS homepage_db;
+
+-- ===== AUTH SERVICE =====
+CREATE USER IF NOT EXISTS 'auth_user'@'%' IDENTIFIED BY '123456';
+GRANT ALL PRIVILEGES ON auth_db.* TO 'auth_user'@'%';
+
+-- ===== UPLOAD SERVICE =====
+CREATE USER IF NOT EXISTS 'upload_user'@'%' IDENTIFIED BY '123456';
+GRANT ALL PRIVILEGES ON upload_db.* TO 'upload_user'@'%';
+
+-- ===== STREAMING SERVICE =====
+CREATE USER IF NOT EXISTS 'stream_user'@'%' IDENTIFIED BY '123456';
+GRANT ALL PRIVILEGES ON stream_db.* TO 'stream_user'@'%';
+
+-- ===== HOMEPAGE SERVICE =====
+CREATE USER IF NOT EXISTS 'homepage_user'@'%' IDENTIFIED BY '123456';
+GRANT ALL PRIVILEGES ON homepage_db.* TO 'homepage_user'@'%';
+
+-- APPLY
+FLUSH PRIVILEGES;
