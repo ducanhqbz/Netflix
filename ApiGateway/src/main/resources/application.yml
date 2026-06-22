@@ -22,6 +22,11 @@ spring:
               predicates:
                 - Path=/api/auth/**
 
+security:
+  jwt:
+    secret-key: "dGhpc2lzYXZlcnlsb25nYmFzZTY0ZW5jb2RlZHNlY3JldGtleXdpdGhhdGxlYXN0MjU2Yml0cw=="
+    expiration-ms: 3600000 # 1 hour
+
 eureka:
   client:
     fetch-registry: true

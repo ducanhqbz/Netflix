@@ -1,15 +1,19 @@
 package com.example.authservice.Repository;
 
 import com.example.authservice.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface UserRepository {
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Integer> {
 
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
 
-    void save(User user);
+    Optional<User> findByUsername(String username);
 
-    void update(User user);
-
+    Optional<User> findByEmail(String email);
 }
