@@ -1,13 +1,19 @@
 package com.example.authservice.listener;
 
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.stereotype.Component;
+//import com.example.authservice.config.RabbitMQConfig;
 
+import com.example.authservice.config.RabbitMQConfig;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AuthListener {
+
+    @PersistenceContext
+    private EntityManager em;
+
 
     @RabbitListener(
             queues = "auth-register-queue",
@@ -56,4 +62,15 @@ public class AuthListener {
 
         // xử lý quên mật khẩu
     }
+
+
+    @RabbitListener(
+            queues = RabbitMQConfig.EMail_QUEUE,
+            concurrency = "3"
+    )
+    public void receiveEmail(String emailsendingID) {
+
+
+    }
+
 }

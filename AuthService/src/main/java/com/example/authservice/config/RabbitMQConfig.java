@@ -18,10 +18,16 @@ public class RabbitMQConfig {
     public static final String AUTH_REGISTER_QUEUE = "auth-register-queue";
     public static final String AUTH_LOGIN_QUEUE = "auth-login-queue";
     public static final String AUTH_FORGOT_QUEUE = "auth-forgot-password-queue";
+    public static final String EMail_QUEUE = "email-queue";
 
     @Bean
     public Queue registerQueue() {
         return new Queue(AUTH_REGISTER_QUEUE, true);
+    }
+
+    @Bean
+    public Queue emailQueue() {
+        return new Queue(EMail_QUEUE, true);
     }
 
     @Bean
@@ -40,10 +46,22 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public TopicExchange emailExchange() {
+        return new TopicExchange(EMAIL_EXCHANGE);
+    }
+
+    @Bean
     public Binding registerBinding() {
         return BindingBuilder.bind(registerQueue())
                 .to(authExchange())
                 .with("auth.register");
+    }
+
+    @Bean
+    public Binding emailBinding() {
+        return BindingBuilder.bind(emailQueue())
+                .to(emailExchange())
+                .with("email.*");
     }
 
     @Bean
