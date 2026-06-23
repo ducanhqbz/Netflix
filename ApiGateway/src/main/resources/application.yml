@@ -6,7 +6,10 @@ spring:
     name: api-gateway
   data:
     redis:
-      database: 0
+      host: localhost
+      port: 6379
+      password: "123456"
+      timeout: 2000ms
   cloud:
     gateway:
       server:
@@ -26,6 +29,11 @@ security:
   jwt:
     secret-key: "dGhpc2lzYXZlcnlsb25nYmFzZTY0ZW5jb2RlZHNlY3JldGtleXdpdGhhdGxlYXN0MjU2Yml0cw=="
     expiration-ms: 3600000 # 1 hour
+
+# Rate Limiting Configuration
+rate-limiting:
+  enabled: true
+  exclude-paths: /api/auth/login,/api/auth/register,/api/rate-limit/**
 
 eureka:
   client:
