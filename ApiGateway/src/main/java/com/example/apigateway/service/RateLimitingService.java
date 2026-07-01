@@ -22,7 +22,7 @@ public class RateLimitingService {
 
         if (count == null) {
             redisTemplate.opsForValue()
-                    .set(key, 1L, 60, TimeUnit.SECONDS);
+                    .set(key, 1L, 300, TimeUnit.SECONDS);
             return true;
         }
 

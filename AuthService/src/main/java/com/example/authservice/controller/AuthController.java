@@ -91,14 +91,12 @@ public class AuthController {
                         "error", "Password và Confirm Password không khớp"
                 ));
             }
-
-            // Register user
-            User newUser = authService.registerUser(request);
+            String error = authService.registerUser(request);
+            if (!error.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", error));
+            }
 
             RegisterResponse response = RegisterResponse.builder()
-                    .id(newUser.getId())
-                    .username(newUser.getUsername())
-                    .email(newUser.getEmail())
                     .status("SUCCESS")
                     .message("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.")
                     .build();

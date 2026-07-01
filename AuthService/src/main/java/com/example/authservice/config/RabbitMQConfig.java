@@ -5,6 +5,10 @@ import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,7 +22,7 @@ public class RabbitMQConfig {
     public static final String AUTH_REGISTER_QUEUE = "auth-register-queue";
     public static final String AUTH_LOGIN_QUEUE = "auth-login-queue";
     public static final String AUTH_FORGOT_QUEUE = "auth-forgot-password-queue";
-    public static final String EMail_QUEUE = "email-queue";
+    public static final String EMAIL_QUEUE = "email-queue";
 
     @Bean
     public Queue registerQueue() {
@@ -27,7 +31,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue emailQueue() {
-        return new Queue(EMail_QUEUE, true);
+        return new Queue(EMAIL_QUEUE, true);
     }
 
     @Bean
@@ -58,13 +62,6 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding emailBinding() {
-        return BindingBuilder.bind(emailQueue())
-                .to(emailExchange())
-                .with("email.*");
-    }
-
-    @Bean
     public Binding loginBinding() {
         return BindingBuilder.bind(loginQueue())
                 .to(authExchange())
@@ -76,5 +73,26 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(forgotQueue())
                 .to(authExchange())
                 .with("auth.forgot");
+    }
+
+    @Bean
+    public Binding emailBinding() {
+        return BindingBuilder.bind(emailQueue())
+                .to(emailExchange())
+                .with("email.*");
+    }
+
+    @Bean
+    public MessageConverter messageConverter() {
+        return new JacksonJsonMessageConverter();
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
+                                         MessageConverter messageConverter) {
+
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(messageConverter);
+        return rabbitTemplate;
     }
 }

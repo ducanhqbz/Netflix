@@ -3,6 +3,7 @@ package com.example.authservice.listener;
 //import com.example.authservice.config.RabbitMQConfig;
 
 import com.example.authservice.config.RabbitMQConfig;
+import com.example.authservice.dto.RegisterRequest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -19,16 +20,8 @@ public class AuthListener {
             queues = "auth-register-queue",
             concurrency = "3"
     )
-    public void receiveRegister(String message) {
-
-        System.out.println(
-                "[REGISTER] "
-                        + Thread.currentThread().getName()
-                        + " -> "
-                        + message
-        );
-
-        // xử lý đăng ký
+    public void receiveRegister(RegisterRequest request) {
+        System.out.println(request.getUsername());
     }
 
     @RabbitListener(
@@ -65,7 +58,7 @@ public class AuthListener {
 
 
     @RabbitListener(
-            queues = RabbitMQConfig.EMail_QUEUE,
+            queues = RabbitMQConfig.EMAIL_QUEUE,
             concurrency = "3"
     )
     public void receiveEmail(String emailsendingID) {

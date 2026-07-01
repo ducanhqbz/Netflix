@@ -27,7 +27,10 @@ security:
   jwt:
     secret-key: "dGhpc2lzYXZlcnlsb25nYmFzZTY0ZW5jb2RlZHNlY3JldGtleXdpdGhhdGxlYXN0MjU2Yml0cw=="
     expiration-ms: 3600000 # 1 hour
-
+amqp:
+  deserialization:
+    trust:
+      all: true
 eureka:
   client:
     service-url:

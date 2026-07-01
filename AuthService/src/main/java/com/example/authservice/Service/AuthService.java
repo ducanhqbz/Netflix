@@ -5,6 +5,8 @@ import com.example.authservice.dto.RegisterRequest;
 import com.example.authservice.entity.Role;
 import com.example.authservice.entity.User;
 import lombok.AllArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,56 +22,39 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
 
+    private final RabbitTemplate rabbitTemplate;
+
     /**
      * Register new user
      */
-    public User registerUser(RegisterRequest request) {
-        // Validate input
+    public String registerUser(RegisterRequest request) {
+        String error = "";
         if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
-            throw new IllegalArgumentException("Username cannot be empty");
+            error = "Username cannot be empty";
         }
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("Email cannot be empty");
+            error = "Email cannot be empty";
         }
         if (request.getPassword() == null || request.getPassword().length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters");
+            error = "Password must be at least 6 characters";
         }
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new IllegalArgumentException("Password and confirm password do not match");
+            error = "Password and confirm password do not match";
         }
 
         // Check if username already exists
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("Username already exists");
+            error = "Username already exists";
         }
 
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            error = "Email already exists";
         }
 
-        // Create new user
-        User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .status("ACTIVE")
-                .createdDate(getCurrentTimestamp())
-                .modifiedDate(getCurrentTimestamp())
-                .roles(new HashSet<>())
-                .build();
+        rabbitTemplate.convertAndSend("auth-exchange", "auth.register", request);
 
-        // Assign default USER role
-        try {
-            Role userRole = roleService.findByRoleCode("USER")
-                    .orElseThrow(() -> new RuntimeException("Default USER role not found"));
-            user.getRoles().add(userRole);
-        } catch (Exception e) {
-            // If role not found, just save without role (will be added later)
-            System.out.println("Warning: Could not assign USER role: " + e.getMessage());
-        }
-
-        return userRepository.save(user);
+        return error;
     }
 
     /**
