@@ -1,17 +1,26 @@
 package com.example.authservice.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Table(name = "email_sending_message")
+@Table(name = "email_sending_message", indexes = {
+        @Index(name = "IDX_EMAIL_SENDING_MESSAGE_ID", columnList = "id")
+})
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class SendingMessage {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Version
     private Integer version;

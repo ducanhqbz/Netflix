@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,11 +38,11 @@ public class User {
 
     @CreatedDate
     @Column(nullable = false, name = "CREATED_DATE")
-    private String createdDate;
+    private LocalDateTime createdDate;
 
 
     @Column(nullable = false, name = "MODIFIED_DATE")
-    private String modifiedDate;
+    private LocalDateTime modifiedDate;
 
     @Builder.Default
     @ManyToMany
