@@ -12,7 +12,7 @@ public class RateLimitingService {
 
     private final RedisTemplate<String, Long> redisTemplate;
 
-    private static final long REQUESTS_PER_MINUTE = 3;
+    private static final long REQUESTS_PER_MINUTE =100;
 
     public boolean isRequestAllowed(String userId) {
 

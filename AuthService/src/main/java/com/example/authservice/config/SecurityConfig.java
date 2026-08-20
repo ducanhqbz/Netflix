@@ -32,6 +32,7 @@ public class SecurityConfig {
                 // 2. Cấu hình quyền truy cập
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )

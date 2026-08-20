@@ -6,14 +6,26 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Date;
 import java.util.function.Function;
 
 @Service
 public class JwtTokenProvider {
+
+    private static final String LOGGED_OUT_TOKEN_PREFIX = "auth:logged-out-token:";
+
+    private final StringRedisTemplate redisTemplate;
+
+    public JwtTokenProvider(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Value("${security.jwt.secret-key}")
     private String secretKey;
@@ -51,6 +63,12 @@ public class JwtTokenProvider {
         }
     }
 
+    public boolean isTokenLoggedOut(String token) {
+        return Boolean.TRUE.equals(
+                redisTemplate.hasKey(LOGGED_OUT_TOKEN_PREFIX + tokenHash(token))
+        );
+    }
+
     private boolean isTokenExpired(String token) {
         Date exp = extractExpiration(token);
         return exp.before(new Date());
@@ -64,5 +82,14 @@ public class JwtTokenProvider {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
-}
 
+    private String tokenHash(String token) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(token.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
+    }
+}

@@ -67,6 +67,20 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("error", "Thiếu JWT token"));
+        }
+
+        try {
+            jwtService.logout(authorization.substring(7));
+            return ResponseEntity.ok(Map.of("message", "Đăng xuất thành công"));
+        } catch (Exception exception) {
+            return ResponseEntity.status(401).body(Map.of("error", "JWT token không hợp lệ"));
+        }
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {

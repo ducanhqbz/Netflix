@@ -10,7 +10,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,24 +29,35 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = entityManager.createQuery(
-                        "SELECT u FROM User u LEFT JOIN FETCH u.roles WHERE u.username = :username",
+                        "SELECT DISTINCT u FROM User u " +
+                                "LEFT JOIN FETCH u.roles r " +
+                                "LEFT JOIN FETCH r.permissions " +
+                                "WHERE u.username = :username",
                         User.class
                 )
                 .setParameter("username", username)
                 .getSingleResult();
 
         // Convert Role entities to GrantedAuthority
-        var authorities = (user.getRoles() != null && !user.getRoles().isEmpty())
-                ? user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleCode()))
-                        .collect(Collectors.toList())
-                : java.util.Collections.emptyList();
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        if (user.getRoles() != null) {
+            authorities.addAll(user.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleCode()))
+                    .collect(Collectors.toList()));
+        }
+
+        user.getRoles().forEach(role -> role.getPermissions().forEach(permission -> {
+            if (permission.getHttpMethod() != null && permission.getApiPattern() != null) {
+                authorities.add(new SimpleGrantedAuthority(
+                        "API:" + permission.getHttpMethod() + ":" + permission.getApiPattern()
+                ));
+            }
+        }));
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .authorities((Collection<? extends GrantedAuthority>) authorities)
+                .authorities(authorities)
                 .build();
     }
 }
-

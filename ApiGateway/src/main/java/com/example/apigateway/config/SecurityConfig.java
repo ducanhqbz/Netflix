@@ -18,7 +18,11 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/home/movies",
+                                "/home/movies/**"
+                        ).permitAll()
                         .anyRequest().permitAll() // Gateway forwards auth check to filter
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -32,4 +36,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-

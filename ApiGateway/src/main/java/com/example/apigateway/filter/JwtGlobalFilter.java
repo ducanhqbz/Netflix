@@ -19,6 +19,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 
 import java.io.IOException;
 import java.security.Key;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class JwtGlobalFilter implements Filter {
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
     @Value("${security.jwt.secret-key}")
     private String secretKey;
 
@@ -41,7 +43,8 @@ public class JwtGlobalFilter implements Filter {
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
             "/api/auth/login",
             "/api/auth/register",
-            "/api/auth/hello"
+            "/api/auth/hello",
+            "/home/movies"
     );
 
     @Override
@@ -70,9 +73,9 @@ public class JwtGlobalFilter implements Filter {
             String token = authHeader.substring(7);
 
             // Validate token
-            if (!jwtTokenProvider.isTokenValid(token)) {
+            if (!jwtTokenProvider.isTokenValid(token) || jwtTokenProvider.isTokenLoggedOut(token)) {
                 httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-                httpResponse.getWriter().write("{\"error\": \"Invalid token\"}");
+                httpResponse.getWriter().write("{\"error\": \"Invalid or logged out token\"}");
                 return;
             }
 
@@ -90,6 +93,12 @@ public class JwtGlobalFilter implements Filter {
 
             if (authorities == null) {
                 authorities = Arrays.asList(); // Empty list if no authorities
+            }
+
+            if (!isAuthorizedForApi(httpRequest, authorities)) {
+                httpResponse.setStatus(HttpStatus.FORBIDDEN.value());
+                httpResponse.getWriter().write("{\"error\": \"Insufficient permission\"}");
+                return;
             }
 
             // Convert to GrantedAuthority
@@ -114,5 +123,25 @@ public class JwtGlobalFilter implements Filter {
             e.printStackTrace();
         }
     }
-}
 
+    private boolean isAuthorizedForApi(HttpServletRequest request, List<String> authorities) {
+        String path = request.getRequestURI();
+
+        // AuthService applies its own role rules. A valid JWT is sufficient to reach it.
+        if (path.startsWith("/api/auth/")) {
+            return true;
+        }
+
+        // ADMIN can access every API; other roles need a matching API permission from the JWT.
+        if (authorities.contains("ROLE_ADMIN")) {
+            return true;
+        }
+
+        return authorities.stream()
+                .filter(authority -> authority.startsWith("API:"))
+                .map(authority -> authority.split(":", 3))
+                .anyMatch(parts -> parts.length == 3
+                        && parts[1].equalsIgnoreCase(request.getMethod())
+                        && PATH_MATCHER.match(parts[2], path));
+    }
+}

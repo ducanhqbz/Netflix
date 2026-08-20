@@ -7,18 +7,31 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 public class JWTService {
+
+    private static final String LOGGED_OUT_TOKEN_PREFIX = "auth:logged-out-token:";
+
+    private final StringRedisTemplate redisTemplate;
+
+    public JWTService(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Value("${security.jwt.secret-key}")
     private String secretKey;
@@ -66,10 +79,30 @@ public class JWTService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             String username = extractEmail(token);
-            return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+            return username.equals(userDetails.getUsername())
+                    && !isTokenExpired(token)
+                    && !isTokenLoggedOut(token);
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public void logout(String token) {
+        long remainingLifetime = extractExpiration(token).getTime() - System.currentTimeMillis();
+        if (remainingLifetime > 0) {
+                redisTemplate.opsForValue().set(
+                        LOGGED_OUT_TOKEN_PREFIX + tokenHash(token),
+                        "true",
+                        remainingLifetime,
+                        TimeUnit.MILLISECONDS
+                );
+        }
+    }
+
+    private boolean isTokenLoggedOut(String token) {
+        return Boolean.TRUE.equals(
+                redisTemplate.hasKey(LOGGED_OUT_TOKEN_PREFIX + tokenHash(token))
+        );
     }
 
     private boolean isTokenExpired(String token) {
@@ -97,5 +130,15 @@ public class JWTService {
     public List<String> extractAuthorities(String token) {
         Claims claims = extractAllClaims(token);
         return (List<String>) claims.get("authorities");
+    }
+
+    private String tokenHash(String token) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(token.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
     }
 }
